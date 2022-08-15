@@ -1,4 +1,4 @@
-# Simple Treat Tracker
+# Simple Treat Tracker - V1 Under Construction
 A compilation of applications used to track how many treats my partner and I give to our spicy new cat Willow.
 ![Willow](images/willow.jpg).
 
