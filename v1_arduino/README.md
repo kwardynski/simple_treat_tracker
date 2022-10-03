@@ -3,7 +3,7 @@ This is the first version of the treats tracker - a simple arduino project with 
 Progress: [Jira Board](https://kwardynski.atlassian.net/jira/software/projects/TT1/boards/3)
 
 **Hardware**: 
-- [Arduino UNO R3](https://www.amazon.ca/gp/product/B01EWOE0UU/ref=ppx_yo_dt_b_search_asin_image?ie=UTF8&psc=1)
+- [Arduino Mega (clone)](https://www.amazon.ca/gp/product/B01H4ZDYCE/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)
 - [3.5" TFT Touch Display](https://www.amazon.ca/gp/product/B077ZT7S38/ref=ppx_yo_dt_b_search_asin_image?ie=UTF8&psc=1)
 
 ## "Considerations":
