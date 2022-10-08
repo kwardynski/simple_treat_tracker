@@ -11,8 +11,10 @@
 
 
 // Calibration Values
-const int XP=8,XM=A2,YP=A3,YM=9;
-const int TS_LEFT=151,TS_RT=861,TS_TOP=923,TS_BOT=114;
+const int XP=8,XM=A2,YP=A3,YM=9; 
+const int TS_LEFT=118,TS_RT=905,TS_TOP=961,TS_BOT=94;
+// x = map(p.y, LEFT=961, RT=94, 0, screen_width=480)
+// y = map(p.x, TOP=905, BOT=118, 0, screen_height=320)
 
 
 // Touchscreen Constructors
