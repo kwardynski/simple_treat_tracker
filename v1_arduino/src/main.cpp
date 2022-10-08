@@ -10,14 +10,16 @@
 #include <gfxfont.h>
 
 
-
 // Calibration Values
 const int XP=8,XM=A2,YP=A3,YM=9;
 const int TS_LEFT=151,TS_RT=861,TS_TOP=923,TS_BOT=114;
 
+
 // Touchscreen Constructors
 MCUFRIEND_kbv tft;
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
+#define MINPRESSURE 200
+#define MAXPRESSURE 200
 
 #define BLACK   0x0000
 #define BLUE    0x001F
@@ -48,13 +50,14 @@ uint16_t inc_button_x;
 byte button_buffer_x = 12;
 byte button_buffer_y = 6;
 
-uint16_t reset_btn_height = 48;
+uint16_t reset_btn_height = 40;
 uint16_t reset_btn_width;
-uint16_t reset_btn_y = kacper_y+3*button_buffer_y;
+uint16_t reset_btn_y = kacper_y+4*button_buffer_y;
 uint16_t reset_btn_x = counters_left;
 
 Adafruit_GFX_Button total_dec_btn, total_inc_btn, jade_dec_btn, jade_inc_btn, kacper_dec_btn, kacper_inc_btn, reset_btn;
 
+uint16_t pixel_x, pixel_y;
 
 void draw_text(uint16_t x, uint16_t y, String text) {
     tft.setCursor(x, y);
@@ -80,13 +83,11 @@ void render_title() {
     tft.print(title_text);
 }
 
-
 void render_treats_count(int used, int max, uint16_t ypos) {
     char buffer[5];
     sprintf(buffer, "%02d/%02d", used, max);
     draw_text(counters_left, ypos, buffer);
 }
-
 
 void find_button_dimensions() {
     tft.setFont(&FreeMonoBold18pt7b);
@@ -97,9 +98,31 @@ void find_button_dimensions() {
     reset_btn_width = w;
 }
 
-
-void setup(void)
+bool Touch_getXY(void)
 {
+    TSPoint p = ts.getPoint();
+    pinMode(YP, OUTPUT);      //restore shared pins
+    pinMode(XM, OUTPUT);
+    digitalWrite(YP, HIGH);   //because TFT control pins
+    digitalWrite(XM, HIGH);
+    bool pressed = (p.z > MINPRESSURE && p.z < MAXPRESSURE);
+    if (pressed) {
+        pixel_x = map(p.x, TS_LEFT, TS_RT, 0, tft.width()); //.kbv makes sense to me
+        pixel_y = map(p.y, TS_TOP, TS_BOT, 0, tft.height());
+
+        Serial.print("(");
+        Serial.print(pixel_x);
+        Serial.print(", ");
+        Serial.print(pixel_y);
+        Serial.println(")");
+    }
+    return pressed;
+}
+
+void setup(void) {
+
+    Serial.begin(9600);
+
     // Initialize the touchscreen
     tft.reset();
     uint16_t id = tft.readID();
@@ -131,9 +154,6 @@ void setup(void)
     reset_btn.initButtonUL(&tft, reset_btn_x, reset_btn_y, reset_btn_width, reset_btn_height, WHITE, RED, WHITE, "RESET", 2);
     reset_btn.drawButton(false);
 
-    // test.initButtonUL(&tft, 175, jade_y-button_height+button_buffer, 60, bh, WHITE, BLUE, WHITE, "+", 2);
-    // test.drawButton(false);
-
     tft.setFont(&FreeSansBold18pt7b);
     tft.setTextSize(1);
     render_title();
@@ -147,9 +167,10 @@ void setup(void)
     render_treats_count(0, max_treats, total_y);
     render_treats_count(0, max_treats/2, jade_y);
     render_treats_count(0, max_treats/2, kacper_y);
-
-    
-    
 }
 
-void loop(void) {}
+void loop(void) {
+
+    bool down = Touch_getXY();
+    
+}
