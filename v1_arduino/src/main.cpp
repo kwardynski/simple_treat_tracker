@@ -46,6 +46,7 @@ uint16_t reset_btn_x = counters_left;
 byte max_treats = 12;
 byte kacper_treats = 0;
 byte jade_treats = 0;
+char treats_string[5];
 
 #define BLACK   0x0000
 #define BLUE    0x001F
@@ -89,9 +90,10 @@ void render_title() {
     tft.print(title_text);
 }
 
-void draw_treats(int used, int max, uint16_t ypos) {
+void draw_treats(int used, int max, uint16_t ypos, char* treats_string) {
+    sprintf(treats_string, "%02d/%02d", used, max);
     tft.setCursor(counters_left, ypos);
-    tft.print(String(used) + "/" + String(max));
+    tft.print(treats_string);
 }
 
 bool get_touch_coordinates(void) {
@@ -158,9 +160,9 @@ void setup(void) {
     draw_text(text_left, kacper_y, "Kacper");
 
     tft.setFont(&FreeMonoBold18pt7b);
-    draw_treats(0, max_treats, total_y);
-    draw_treats(0, max_treats/2, jade_y);
-    draw_treats(0, max_treats/2, kacper_y);
+    draw_treats(0, max_treats, total_y, treats_string);
+    draw_treats(0, max_treats/2, jade_y, treats_string);
+    draw_treats(0, max_treats/2, kacper_y, treats_string);
 }
 
 
