@@ -89,10 +89,9 @@ void render_title() {
     tft.print(title_text);
 }
 
-void render_treats_count(int used, int max, uint16_t ypos) {
-    char buffer[5];
-    sprintf(buffer, "%02d/%02d", used, max);
-    draw_text(counters_left, ypos, buffer);
+void draw_treats(int used, int max, uint16_t ypos) {
+    tft.setCursor(counters_left, ypos);
+    tft.print(String(used) + "/" + String(max));
 }
 
 bool get_touch_coordinates(void) {
@@ -159,11 +158,12 @@ void setup(void) {
     draw_text(text_left, kacper_y, "Kacper");
 
     tft.setFont(&FreeMonoBold18pt7b);
-    render_treats_count(0, max_treats, total_y);
-    // render_treats_count(0, max_treats/2, jade_y);
-    // render_treats_count(0, max_treats/2, kacper_y);
-
+    draw_treats(0, max_treats, total_y);
+    draw_treats(0, max_treats/2, jade_y);
+    draw_treats(0, max_treats/2, kacper_y);
 }
+
+
 
 void loop (void) {
 
