@@ -1,50 +1,34 @@
+
+// Touchscreen libraries
+#include <Adafruit_GFX.h>
 #include <MCUFRIEND_kbv.h>
 #include <TouchScreen.h>
-#include <Adafruit_GFX.h>
 
-// #include <Fonts/FreeMonoBold12pt7b.h>
+#include <Fonts/FreeMonoBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSans18pt7b.h>
 #include <Fonts/FreeMonoBold18pt7b.h>
 #include <FreeDefaultFonts.h>
 #include <gfxfont.h>
 
-
-// Calibration Values
-const int XP=8,XM=A2,YP=A3,YM=9; 
-const int TS_LEFT=118,TS_RT=905,TS_TOP=961,TS_BOT=94;
-// x = map(p.y, LEFT=961, RT=94, 0, screen_width=480)
-// y = map(p.x, TOP=905, BOT=118, 0, screen_height=320)
-
-
-// Touchscreen Constructors
+// Touchscreen init/setup
 MCUFRIEND_kbv tft;
-TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 #define MINPRESSURE 200
-#define MAXPRESSURE 200
-
-#define BLACK   0x0000
-#define BLUE    0x001F
-#define RED     0xF800
-// #define GREEN   0x07E0
-// #define CYAN    0x07FF
-#define MAGENTA 0xF81F
-// #define YELLOW  0xFFE0
-#define WHITE   0xFFFF
-
-int16_t x1, y1;
-uint16_t w, h, text_left;
+#define MAXPRESSURE 1000
+const int XP=8,XM=A2,YP=A3,YM=9; 
+const int TS_LEFT=961,TS_RT=94,TS_TOP=905,TS_BOT=118;
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 uint16_t screen_width = 480;
 uint16_t screen_height = 320;
+int16_t x1, y1;
+uint16_t w, h, text_left;
+int touch_x, touch_y;
+
+// Button Setup
+Adafruit_GFX_Button total_dec_btn, total_inc_btn, jade_dec_btn, jade_inc_btn, kacper_dec_btn, kacper_inc_btn, reset_btn;
 uint16_t total_y = 120;
 uint16_t jade_y = 180;
 uint16_t kacper_y = 240;
-
-uint16_t counters_left = 270;
-byte max_treats = 12;
-byte kacper_treats = 0;
-byte jade_treats = 0;
-
 uint16_t button_width = 60;
 uint16_t button_height = 32;
 uint16_t dec_button_x;
@@ -52,14 +36,34 @@ uint16_t inc_button_x;
 byte button_buffer_x = 12;
 byte button_buffer_y = 6;
 
+uint16_t counters_left = 270;
 uint16_t reset_btn_height = 40;
 uint16_t reset_btn_width;
 uint16_t reset_btn_y = kacper_y+4*button_buffer_y;
 uint16_t reset_btn_x = counters_left;
 
-Adafruit_GFX_Button total_dec_btn, total_inc_btn, jade_dec_btn, jade_inc_btn, kacper_dec_btn, kacper_inc_btn, reset_btn;
+// Logic Setup
+byte max_treats = 12;
+byte kacper_treats = 0;
+byte jade_treats = 0;
 
-uint16_t pixel_x, pixel_y;
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define MAGENTA 0xF81F
+#define WHITE   0xFFFF
+// #define GREEN   0x07E0
+// #define CYAN    0x07FF
+// #define YELLOW  0xFFE0
+
+void find_button_dimensions() {
+    tft.setFont(&FreeMonoBold18pt7b);
+    tft.getTextBounds("00/00", 0, 0, &x1, &y1, &w, &h);
+
+    dec_button_x = counters_left - (button_buffer_x + button_width);
+    inc_button_x = counters_left + w + 1.5*button_buffer_x;
+    reset_btn_width = w;
+}
 
 void draw_text(uint16_t x, uint16_t y, String text) {
     tft.setCursor(x, y);
@@ -79,56 +83,44 @@ void render_title() {
         h + 2*title_buffer,
         MAGENTA
     );
-    
+
     tft.setCursor((screen_width - w)/2, 2*title_buffer + h);
     tft.setTextColor(WHITE);
     tft.print(title_text);
 }
 
-void render_treats_count(int used, int max, uint16_t ypos) {
-    char buffer[5];
-    sprintf(buffer, "%02d/%02d", used, max);
-    draw_text(counters_left, ypos, buffer);
+void draw_treats(int used, int max, uint16_t ypos) {
+    tft.setCursor(counters_left, ypos);
+    tft.print(String(used) + "/" + String(max));
 }
 
-void find_button_dimensions() {
-    tft.setFont(&FreeMonoBold18pt7b);
-    tft.getTextBounds("00/00", 0, 0, &x1, &y1, &w, &h);
-
-    dec_button_x = counters_left - (button_buffer_x + button_width);
-    inc_button_x = counters_left + w + 1.5*button_buffer_x;
-    reset_btn_width = w;
-}
-
-bool Touch_getXY(void)
-{
+bool get_touch_coordinates(void) {
     TSPoint p = ts.getPoint();
-    pinMode(YP, OUTPUT);      //restore shared pins
+    
+    pinMode(YP, OUTPUT);
     pinMode(XM, OUTPUT);
-    digitalWrite(YP, HIGH);   //because TFT control pins
+
+    digitalWrite(YP, HIGH);
     digitalWrite(XM, HIGH);
+
     bool pressed = (p.z > MINPRESSURE && p.z < MAXPRESSURE);
     if (pressed) {
-        pixel_x = map(p.x, TS_LEFT, TS_RT, 0, tft.width()); //.kbv makes sense to me
-        pixel_y = map(p.y, TS_TOP, TS_BOT, 0, tft.height());
+        touch_x = map(p.y, TS_LEFT, TS_RT, 0, screen_width);
+        touch_y = map(p.x, TS_TOP, TS_BOT, 0, screen_height);
 
-        Serial.print("(");
-        Serial.print(pixel_x);
-        Serial.print(", ");
-        Serial.print(pixel_y);
-        Serial.println(")");
+        // PRINT TOUCH COORDINATES FOR DEBUGGIN
+        char buffer[10];
+        sprintf (buffer, "(%03d, %03d)", touch_x, touch_y);
+        Serial.println(buffer);
     }
     return pressed;
-}
+} 
 
 void setup(void) {
-
     Serial.begin(9600);
 
-    // Initialize the touchscreen
-    tft.reset();
-    uint16_t id = tft.readID();
-    tft.begin(id);
+    uint16_t ID = tft.readID();
+    tft.begin(ID);
     tft.setRotation(1);
     tft.fillScreen(BLACK);
 
@@ -166,13 +158,17 @@ void setup(void) {
     draw_text(text_left, kacper_y, "Kacper");
 
     tft.setFont(&FreeMonoBold18pt7b);
-    render_treats_count(0, max_treats, total_y);
-    render_treats_count(0, max_treats/2, jade_y);
-    render_treats_count(0, max_treats/2, kacper_y);
+    draw_treats(0, max_treats, total_y);
+    draw_treats(0, max_treats/2, jade_y);
+    draw_treats(0, max_treats/2, kacper_y);
 }
 
-void loop(void) {
 
-    bool down = Touch_getXY();
-    
+
+void loop (void) {
+
+    bool pressed = get_touch_coordinates();
+
 }
+
+
