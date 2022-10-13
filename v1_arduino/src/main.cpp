@@ -13,7 +13,7 @@
 
 // Touchscreen init/setup
 MCUFRIEND_kbv tft;
-#define MINPRESSURE 200
+#define MINPRESSURE 50
 #define MAXPRESSURE 1000
 const int XP=8,XM=A2,YP=A3,YM=9; 
 const int TS_LEFT=961,TS_RT=94,TS_TOP=905,TS_BOT=118;
@@ -201,7 +201,6 @@ void loop (void) {
     }
     
     previous_pressed_state = pressed_state;
-    
 }
 
 
