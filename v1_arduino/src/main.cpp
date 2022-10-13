@@ -46,8 +46,13 @@ byte max_treats = 12;
 byte kacper_treats = 0;
 byte jade_treats = 0;
 char treats_string[5];
+bool pressed_state;
+bool previous_pressed_state = false;
 bool is_pressed = false;
+long debounce_reference = 0;
+long debounce_delay = 50;
 uint16_t touch_coordinates[] = {0, 0};
+
 
 #define BLACK   0x0000
 #define BLUE    0x001F
@@ -97,7 +102,7 @@ void draw_treats(int used, int max, uint16_t ypos, char* treats_string) {
     tft.print(treats_string);
 }
 
-bool get_touch_coordinates(uint16_t *touch_coordinates) {
+void get_touch_coordinates(uint16_t *touch_coordinates) {
     TSPoint p = ts.getPoint();
     
     pinMode(YP, OUTPUT);
@@ -111,10 +116,10 @@ bool get_touch_coordinates(uint16_t *touch_coordinates) {
         touch_coordinates[0] = map(p.y, TS_LEFT, TS_RT, 0, screen_width);
         touch_coordinates[1] = map(p.x, TS_TOP, TS_BOT, 0, screen_height);
     }
-    return pressed;
 } 
 
 void disp_coordinates(uint16_t *touch_coordinates) {
+
     // PRINT TOUCH COORDINATES FOR DEBUGGING
     char buffer[10];
     sprintf (buffer, "(%03d, %03d)", touch_coordinates[0], touch_coordinates[1]);
@@ -172,9 +177,31 @@ void setup(void) {
 
 void loop (void) {
 
-    bool pressed = get_touch_coordinates(touch_coordinates);
-    disp_coordinates(touch_coordinates);
+    // get_touch_coordinates(touch_coordinates);
+    // disp_coordinates(touch_coordinates);
 
+    TSPoint p = ts.getPoint();
+
+    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+        is_pressed = true;
+        debounce_reference = millis();
+    }
+
+    if (is_pressed == true && p.z < MINPRESSURE) {
+        if ((millis() - debounce_reference) > debounce_delay) {
+            pressed_state = false;
+        }
+        else {
+            pressed_state = true;
+        }
+    }
+
+    if (previous_pressed_state != pressed_state) {
+        Serial.println(pressed_state);
+    }
+    
+    previous_pressed_state = pressed_state;
+    
 }
 
 
