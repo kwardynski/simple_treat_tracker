@@ -42,7 +42,8 @@ uint16_t reset_btn_y = kacper_y+4*button_buffer_y;
 uint16_t reset_btn_x = counters_left;
 
 // Logic Setup
-byte max_treats = 12;
+byte total_treats = 0;
+byte max_treats = 8;
 byte kacper_treats = 0;
 byte jade_treats = 0;
 char treats_string[5];
@@ -51,7 +52,10 @@ bool previous_pressed_state = false;
 bool is_pressed = false;
 long debounce_reference = 0;
 long debounce_delay = 50;
+uint16_t touch_x, touch_y;
 uint16_t touch_coordinates[] = {0, 0};
+TSPoint point = ts.getPoint();
+bool button_pressed = false;
 
 
 #define BLACK   0x0000
@@ -59,14 +63,10 @@ uint16_t touch_coordinates[] = {0, 0};
 #define RED     0xF800
 #define MAGENTA 0xF81F
 #define WHITE   0xFFFF
-// #define GREEN   0x07E0
-// #define CYAN    0x07FF
-// #define YELLOW  0xFFE0
 
 void find_button_dimensions() {
     tft.setFont(&FreeMonoBold18pt7b);
     tft.getTextBounds("00/00", 0, 0, &x1, &y1, &w, &h);
-
     dec_button_x = counters_left - (button_buffer_x + button_width);
     inc_button_x = counters_left + w + 1.5*button_buffer_x;
     reset_btn_width = w;
@@ -97,32 +97,26 @@ void render_title() {
 }
 
 void draw_treats(int used, int max, uint16_t ypos, char* treats_string) {
+    tft.setFont(&FreeMonoBold18pt7b);
     sprintf(treats_string, "%02d/%02d", used, max);
+
+    tft.getTextBounds(treats_string, 0, 0, &x1, &y1, &w, &h);
+    tft.fillRect(counters_left, ypos-h, 1.1*w, 1.1*h, BLACK);
+
     tft.setCursor(counters_left, ypos);
     tft.print(treats_string);
 }
 
-void get_touch_coordinates(uint16_t *touch_coordinates) {
-    TSPoint p = ts.getPoint();
-    
-    pinMode(YP, OUTPUT);
-    pinMode(XM, OUTPUT);
-
-    digitalWrite(YP, HIGH);
-    digitalWrite(XM, HIGH);
-
-    bool pressed = (p.z > MINPRESSURE && p.z < MAXPRESSURE);
-    if (pressed) {
-        touch_coordinates[0] = map(p.y, TS_LEFT, TS_RT, 0, screen_width);
-        touch_coordinates[1] = map(p.x, TS_TOP, TS_BOT, 0, screen_height);
-    }
-} 
-
 void disp_coordinates(uint16_t *touch_coordinates) {
-
     // PRINT TOUCH COORDINATES FOR DEBUGGING
     char buffer[10];
     sprintf (buffer, "(%03d, %03d)", touch_coordinates[0], touch_coordinates[1]);
+    Serial.println(buffer);
+}
+
+void disp_coordinates(uint16_t x, uint16_t y) {
+    char buffer[10];
+    sprintf (buffer, "(%03d, %03d)", x, y);
     Serial.println(buffer);
 }
 
@@ -143,13 +137,13 @@ void setup(void) {
     total_inc_btn.initButtonUL(&tft, inc_button_x, total_y-button_height+button_buffer_y, button_width, button_height, WHITE, BLUE, WHITE, "+", 2);
     total_inc_btn.drawButton(false);
 
-    jade_dec_btn.initButtonUL(&tft, dec_button_x, jade_y-button_height+button_buffer_y, button_width, button_height, WHITE, BLUE, WHITE, "+", 2);
+    jade_dec_btn.initButtonUL(&tft, dec_button_x, jade_y-button_height+button_buffer_y, button_width, button_height, WHITE, BLUE, WHITE, "-", 2);
     jade_dec_btn.drawButton(false);
 
     jade_inc_btn.initButtonUL(&tft, inc_button_x, jade_y-button_height+button_buffer_y, button_width, button_height, WHITE, BLUE, WHITE, "+", 2);
     jade_inc_btn.drawButton(false);
 
-    kacper_dec_btn.initButtonUL(&tft, dec_button_x, kacper_y-button_height+button_buffer_y, button_width, button_height, WHITE, BLUE, WHITE, "+", 2);
+    kacper_dec_btn.initButtonUL(&tft, dec_button_x, kacper_y-button_height+button_buffer_y, button_width, button_height, WHITE, BLUE, WHITE, "-", 2);
     kacper_dec_btn.drawButton(false);
 
     kacper_inc_btn.initButtonUL(&tft, inc_button_x, kacper_y-button_height+button_buffer_y, button_width, button_height, WHITE, BLUE, WHITE, "+", 2);
@@ -167,7 +161,6 @@ void setup(void) {
     draw_text(text_left, jade_y, "Jade:");
     draw_text(text_left, kacper_y, "Kacper");
 
-    tft.setFont(&FreeMonoBold18pt7b);
     draw_treats(0, max_treats, total_y, treats_string);
     draw_treats(0, max_treats/2, jade_y, treats_string);
     draw_treats(0, max_treats/2, kacper_y, treats_string);
@@ -177,17 +170,19 @@ void setup(void) {
 
 void loop (void) {
 
-    // get_touch_coordinates(touch_coordinates);
-    // disp_coordinates(touch_coordinates);
+    // Check for touch point
+    TSPoint touch_point = ts.getPoint();
+    pinMode(YP, OUTPUT);
+    pinMode(XM, OUTPUT); 
 
-    TSPoint p = ts.getPoint();
-
-    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+    // Check to see if screen is pressed and re-set debounce reference
+    if (touch_point.z > MINPRESSURE && touch_point.z < MAXPRESSURE) {
         is_pressed = true;
         debounce_reference = millis();
     }
 
-    if (is_pressed == true && p.z < MINPRESSURE) {
+    // Determine whether the screen is actually released or a false negative requires debounce
+    if (is_pressed == true && touch_point.z < MINPRESSURE) {
         if ((millis() - debounce_reference) > debounce_delay) {
             pressed_state = false;
         }
@@ -196,11 +191,68 @@ void loop (void) {
         }
     }
 
-    if (previous_pressed_state != pressed_state) {
-        Serial.println(pressed_state);
-    }
+    // If initial press is registered, determine whether it is within the bounds of a button
+    // and handle input appropriately
+    if (previous_pressed_state == false && pressed_state == true) {
+
+        touch_x = map(touch_point.y, TS_LEFT, TS_RT, 0, screen_width);
+        touch_y = map(touch_point.x, TS_TOP, TS_BOT, 0, screen_height); 
     
+        if (reset_btn.contains(touch_x, touch_y)) {
+            total_treats = 0;
+            jade_treats = 0;
+            kacper_treats = 0;
+            button_pressed = true;
+        }
+
+        else if (total_dec_btn.contains(touch_x, touch_y)) {
+            if (max_treats > 0) {
+                max_treats = max_treats - 2;
+                button_pressed = true;
+            }
+        }
+
+        else if (total_inc_btn.contains(touch_x, touch_y)) {
+            max_treats = max_treats + 2;
+            button_pressed = true;
+        }
+
+        else if (jade_dec_btn.contains(touch_x, touch_y)) {
+            if (jade_treats > 0) {
+                jade_treats = jade_treats - 1;
+                button_pressed = true;
+            }
+        }
+
+        else if (jade_inc_btn.contains(touch_x, touch_y)) {
+            jade_treats = jade_treats + 1;
+            button_pressed = true;
+        }
+
+        else if (kacper_dec_btn.contains(touch_x, touch_y)) {
+            if (kacper_treats > 0) {
+                kacper_treats = kacper_treats - 1;
+                button_pressed = true;
+            }
+        }
+
+        else if (kacper_inc_btn.contains(touch_x, touch_y)) {
+            kacper_treats = kacper_treats + 1;
+            button_pressed = true;
+        }
+
+        if (button_pressed) {
+            draw_treats(jade_treats+kacper_treats, max_treats, total_y, treats_string);
+            draw_treats(jade_treats, max_treats/2, jade_y, treats_string);
+            draw_treats(kacper_treats, max_treats/2, kacper_y, treats_string);
+        }
+    }
+
+    // If release is registered, reset button draw to false (unpressed) state 
+    if (previous_pressed_state == true && pressed_state == false) {
+        
+    }
+
     previous_pressed_state = pressed_state;
+    button_pressed = false;
 }
-
-
