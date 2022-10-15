@@ -13,7 +13,7 @@
 
 // Touchscreen init/setup
 MCUFRIEND_kbv tft;
-#define MINPRESSURE 200
+#define MINPRESSURE 50
 #define MAXPRESSURE 1000
 const int XP=8,XM=A2,YP=A3,YM=9; 
 const int TS_LEFT=961,TS_RT=94,TS_TOP=905,TS_BOT=118;
@@ -22,7 +22,6 @@ uint16_t screen_width = 480;
 uint16_t screen_height = 320;
 int16_t x1, y1;
 uint16_t w, h, text_left;
-int touch_x, touch_y;
 
 // Button Setup
 Adafruit_GFX_Button total_dec_btn, total_inc_btn, jade_dec_btn, jade_inc_btn, kacper_dec_btn, kacper_inc_btn, reset_btn;
@@ -47,6 +46,13 @@ byte max_treats = 12;
 byte kacper_treats = 0;
 byte jade_treats = 0;
 char treats_string[5];
+bool pressed_state;
+bool previous_pressed_state = false;
+bool is_pressed = false;
+long debounce_reference = 0;
+long debounce_delay = 50;
+uint16_t touch_coordinates[] = {0, 0};
+
 
 #define BLACK   0x0000
 #define BLUE    0x001F
@@ -96,7 +102,7 @@ void draw_treats(int used, int max, uint16_t ypos, char* treats_string) {
     tft.print(treats_string);
 }
 
-bool get_touch_coordinates(void) {
+void get_touch_coordinates(uint16_t *touch_coordinates) {
     TSPoint p = ts.getPoint();
     
     pinMode(YP, OUTPUT);
@@ -107,16 +113,18 @@ bool get_touch_coordinates(void) {
 
     bool pressed = (p.z > MINPRESSURE && p.z < MAXPRESSURE);
     if (pressed) {
-        touch_x = map(p.y, TS_LEFT, TS_RT, 0, screen_width);
-        touch_y = map(p.x, TS_TOP, TS_BOT, 0, screen_height);
-
-        // PRINT TOUCH COORDINATES FOR DEBUGGIN
-        char buffer[10];
-        sprintf (buffer, "(%03d, %03d)", touch_x, touch_y);
-        Serial.println(buffer);
+        touch_coordinates[0] = map(p.y, TS_LEFT, TS_RT, 0, screen_width);
+        touch_coordinates[1] = map(p.x, TS_TOP, TS_BOT, 0, screen_height);
     }
-    return pressed;
 } 
+
+void disp_coordinates(uint16_t *touch_coordinates) {
+
+    // PRINT TOUCH COORDINATES FOR DEBUGGING
+    char buffer[10];
+    sprintf (buffer, "(%03d, %03d)", touch_coordinates[0], touch_coordinates[1]);
+    Serial.println(buffer);
+}
 
 void setup(void) {
     Serial.begin(9600);
@@ -169,8 +177,30 @@ void setup(void) {
 
 void loop (void) {
 
-    bool pressed = get_touch_coordinates();
+    // get_touch_coordinates(touch_coordinates);
+    // disp_coordinates(touch_coordinates);
 
+    TSPoint p = ts.getPoint();
+
+    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+        is_pressed = true;
+        debounce_reference = millis();
+    }
+
+    if (is_pressed == true && p.z < MINPRESSURE) {
+        if ((millis() - debounce_reference) > debounce_delay) {
+            pressed_state = false;
+        }
+        else {
+            pressed_state = true;
+        }
+    }
+
+    if (previous_pressed_state != pressed_state) {
+        Serial.println(pressed_state);
+    }
+    
+    previous_pressed_state = pressed_state;
 }
 
 
