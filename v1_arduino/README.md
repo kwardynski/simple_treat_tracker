@@ -2,9 +2,15 @@
 This is the first version of the treats tracker - a simple arduino project with a touch screen which is going to sit in our kitchen.\
 Progress: [Jira Board](https://kwardynski.atlassian.net/jira/software/projects/TT1/boards/3)
 
-**Hardware**: 
+### Hardward: 
 - [Arduino Mega (clone)](https://www.amazon.ca/gp/product/B01H4ZDYCE/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)
 - [3.5" TFT Touch Display](https://www.amazon.ca/gp/product/B077ZT7S38/ref=ppx_yo_dt_b_search_asin_image?ie=UTF8&psc=1)
+
+### Libraries:
+- Adafruit_BusIO
+- Adafruit_GFX_Library
+- Adafruit_TouchScreen
+- MCUFRIEND_kbv
 
 ## "Considerations":
 - As _ok_ as the arduino IDE is, I think this is the perfect time to start using [PlatformIO](https://platformio.org/). Having intellisense outweighs the fact that managing arduino libraries is slightly clunkier with PlatformIO than the arduino IDE is a tradeoff I'm willing to make. 
