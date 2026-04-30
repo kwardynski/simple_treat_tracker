@@ -40,6 +40,7 @@ bool button_pressed = false;
 
 // Button Setup
 Adafruit_GFX_Button total_dec_btn, total_inc_btn, jade_dec_btn, jade_inc_btn, kacper_dec_btn, kacper_inc_btn, reset_btn;
+Adafruit_GFX_Button* active_btn = nullptr;
 const uint16_t g_total_y = 120;
 const uint16_t g_jade_y = 180;
 const uint16_t g_kacper_y = 240;
@@ -98,6 +99,8 @@ void render_title() {
 
 void draw_treats(int used, int max, uint16_t ypos, char* treats_string) {
     tft.setFont(&FreeMonoBold18pt7b);
+    tft.setTextSize(1);
+    tft.setTextColor(WHITE);
     sprintf(treats_string, "%02d/%02d", used, max);
 
     tft.getTextBounds(treats_string, 0, 0, &x1, &y1, &w, &h);
@@ -184,7 +187,11 @@ void loop (void) {
     // and handle input appropriately
     if (previous_pressed_state == false && pressed_state == true) {
 
+        tft.setFont(NULL);
+
         if (reset_btn.contains(touch_x, touch_y)) {
+            active_btn = &reset_btn;
+            reset_btn.drawButton(true);
             total_treats = 0;
             jade_treats = 0;
             kacper_treats = 0;
@@ -192,6 +199,8 @@ void loop (void) {
         }
 
         else if (total_dec_btn.contains(touch_x, touch_y)) {
+            active_btn = &total_dec_btn;
+            total_dec_btn.drawButton(true);
             if (max_treats > 0) {
                 max_treats = max_treats - 2;
                 button_pressed = true;
@@ -199,11 +208,15 @@ void loop (void) {
         }
 
         else if (total_inc_btn.contains(touch_x, touch_y)) {
+            active_btn = &total_inc_btn;
+            total_inc_btn.drawButton(true);
             max_treats = max_treats + 2;
             button_pressed = true;
         }
 
         else if (jade_dec_btn.contains(touch_x, touch_y)) {
+            active_btn = &jade_dec_btn;
+            jade_dec_btn.drawButton(true);
             if (jade_treats > 0) {
                 jade_treats = jade_treats - 1;
                 button_pressed = true;
@@ -211,11 +224,15 @@ void loop (void) {
         }
 
         else if (jade_inc_btn.contains(touch_x, touch_y)) {
+            active_btn = &jade_inc_btn;
+            jade_inc_btn.drawButton(true);
             jade_treats = jade_treats + 1;
             button_pressed = true;
         }
 
         else if (kacper_dec_btn.contains(touch_x, touch_y)) {
+            active_btn = &kacper_dec_btn;
+            kacper_dec_btn.drawButton(true);
             if (kacper_treats > 0) {
                 kacper_treats = kacper_treats - 1;
                 button_pressed = true;
@@ -223,6 +240,8 @@ void loop (void) {
         }
 
         else if (kacper_inc_btn.contains(touch_x, touch_y)) {
+            active_btn = &kacper_inc_btn;
+            kacper_inc_btn.drawButton(true);
             kacper_treats = kacper_treats + 1;
             button_pressed = true;
         }
@@ -234,9 +253,13 @@ void loop (void) {
         }
     }
 
-    // If release is registered, reset button draw to false (unpressed) state 
+    // If release is registered, reset button draw to false (unpressed) state
     if (previous_pressed_state == true && pressed_state == false) {
-        
+        if (active_btn != nullptr) {
+            tft.setFont(NULL);
+            active_btn->drawButton(false);
+            active_btn = nullptr;
+        }
     }
 
     previous_pressed_state = pressed_state;
