@@ -5,9 +5,9 @@
 #include <TouchScreen.h>
 
 #include <Fonts/FreeMonoBold12pt7b.h>
-#include <Fonts/FreeSansBold18pt7b.h>
-#include <Fonts/FreeSans18pt7b.h>
-#include <Fonts/FreeMonoBold18pt7b.h>
+#include <FreeSansBold18pt7b_trimmed.h>
+#include <FreeSans18pt7b_trimmed.h>
+#include <FreeMonoBold18pt7b_trimmed.h>
 #include <FreeDefaultFonts.h>
 #include <gfxfont.h>
 
@@ -26,7 +26,7 @@ uint16_t g_text_left;
 #define MINPRESSURE 50
 #define MAXPRESSURE 1000
 const int XP=8,XM=A2,YP=A3,YM=9; 
-const int TS_LEFT=961,TS_RT=94,TS_TOP=905,TS_BOT=118;
+const int TS_LEFT=949,TS_RT=99,TS_TOP=888,TS_BOT=150;
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 int16_t x1, y1;
 uint16_t w, h;
@@ -162,19 +162,21 @@ void loop (void) {
     pinMode(YP, OUTPUT);
     pinMode(XM, OUTPUT); 
 
-    // Check to see if screen is pressed and re-set debounce reference
+    // Check to see if screen is pressed and re-set debounce reference.
+    // Capture coordinates here, while the readings are still valid.
     if (touch_point.z > MINPRESSURE && touch_point.z < MAXPRESSURE) {
         is_pressed = true;
+        pressed_state = true;
         debounce_reference = millis();
+        touch_x = map(touch_point.y, TS_LEFT, TS_RT, 0, g_screen_width);
+        touch_y = map(touch_point.x, TS_TOP, TS_BOT, 0, g_screen_height);
     }
 
     // Determine whether the screen is actually released or a false negative requires debounce
     if (is_pressed == true && touch_point.z < MINPRESSURE) {
         if ((millis() - debounce_reference) > g_debounce_delay) {
             pressed_state = false;
-        }
-        else {
-            pressed_state = true;
+            is_pressed = false;
         }
     }
 
@@ -182,9 +184,6 @@ void loop (void) {
     // and handle input appropriately
     if (previous_pressed_state == false && pressed_state == true) {
 
-        touch_x = map(touch_point.y, TS_LEFT, TS_RT, 0, g_screen_width);
-        touch_y = map(touch_point.x, TS_TOP, TS_BOT, 0, g_screen_height); 
-    
         if (reset_btn.contains(touch_x, touch_y)) {
             total_treats = 0;
             jade_treats = 0;
