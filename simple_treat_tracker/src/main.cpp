@@ -5,9 +5,9 @@
 #include <TouchScreen.h>
 
 #include <Fonts/FreeMonoBold12pt7b.h>
-#include <Fonts/FreeSansBold18pt7b.h>
-#include <Fonts/FreeSans18pt7b.h>
-#include <Fonts/FreeMonoBold18pt7b.h>
+#include <FreeSansBold18pt7b_trimmed.h>
+#include <FreeSans18pt7b_trimmed.h>
+#include <FreeMonoBold18pt7b_trimmed.h>
 #include <FreeDefaultFonts.h>
 #include <gfxfont.h>
 
