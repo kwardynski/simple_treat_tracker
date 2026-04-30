@@ -26,7 +26,7 @@ uint16_t g_text_left;
 #define MINPRESSURE 50
 #define MAXPRESSURE 1000
 const int XP=8,XM=A2,YP=A3,YM=9; 
-const int TS_LEFT=961,TS_RT=94,TS_TOP=905,TS_BOT=118;
+const int TS_LEFT=949,TS_RT=99,TS_TOP=888,TS_BOT=150;
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 int16_t x1, y1;
 uint16_t w, h;
