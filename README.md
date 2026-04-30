@@ -3,12 +3,12 @@ An arduino based touch-screen treat tracker so we don't make our cat too fat.
 ![Simple Treat Tracker](images/stt.jpg)
 
 ## Hardware:
-- [Arduino Mega (clone)](https://www.amazon.ca/gp/product/B01H4ZDYCE/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)
+- [Arduino Uno (clone)](https://www.amazon.ca/dp/B01EWOE0UU)
 - [3.5" TFT Touch Display](https://www.amazon.ca/gp/product/B077ZT7S38/ref=ppx_yo_dt_b_search_asin_image?ie=UTF8&psc=1)
 
 ## Libaries:
 - Adafruit_BusIO
-- Adafruit_GFX_Library
+- Adafruit_GFX_Library (thinned out to include only required characters)
 - Adafruit_TouchScreen
 - MCUFRIEND_kbv
 
@@ -20,7 +20,7 @@ An arduino based touch-screen treat tracker so we don't make our cat too fat.
 [Jira Board](https://kwardynski.atlassian.net/jira/software/projects/TT1/boards/3)
 - [ ] Install the screen in the purchased box
 - [ ] Re-draw buttons as pressed/released when pressed/released 
-- [ ] Try thinning out the imported fonts libraries (remove unused characters) to reduce memory and see if it can be run on the UNO (this will reduce the draw latency on the screen with the Mega)
+- [x] Try thinning out the imported fonts libraries (remove unused characters) to reduce memory and see if it can be run on the UNO (this will reduce the draw latency on the screen with the Mega)
 
 ### Bonus picture of cat
 ![Willow](images/willow.jpg)
