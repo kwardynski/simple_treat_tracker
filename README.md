@@ -19,7 +19,7 @@ An arduino based touch-screen treat tracker so we don't make our cat too fat.
 ## TODO:
 [Jira Board](https://kwardynski.atlassian.net/jira/software/projects/TT1/boards/3)
 - [ ] Install the screen in the purchased box
-- [ ] Re-draw buttons as pressed/released when pressed/released 
+- [x] Re-draw buttons as pressed/released when pressed/released 
 - [x] Try thinning out the imported fonts libraries (remove unused characters) to reduce memory and see if it can be run on the UNO (this will reduce the draw latency on the screen with the Mega)
 
 ### Bonus picture of cat
